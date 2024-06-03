@@ -4,6 +4,7 @@ import numpy as np
 foto = cv2.imread("./dataset/train/train/not_skin_cancer/not_skin_cancer_01.jpg")
 
 print(foto.shape)
+print("adsadada")
 #opencv B G R sırasında tutuyor renk değerlerini = kanal 0=blue 1=green 2=red
 
 # x = 50
