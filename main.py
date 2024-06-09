@@ -93,6 +93,46 @@ def unsharp_mask(image, kernel_size=(5, 5), sigma=1.0, amount=1.0, threshold=0):
 
     return sharpened
 
+
+def create_mask(image):
+    """Create a mask based on green contours in the image."""
+    # Define the green color range
+    lower_green = np.array([0, 255, 0])
+    upper_green = np.array([0, 255, 0])
+
+    # Create a mask for green color
+    mask = cv2.inRange(image, lower_green, upper_green)
+
+    # Dilate the mask to fill in gaps (optional)
+    kernel = np.ones((5, 5), np.uint8)
+    mask = cv2.dilate(mask, kernel, iterations=1)
+
+    # Find contours and fill them
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    mask_filled = np.zeros_like(mask)
+    cv2.drawContours(mask_filled, contours, -1, (255), thickness=cv2.FILLED)
+
+    return mask_filled
+
+def calculate_area(mask):
+    """Calculate the area size of the masked region."""
+    area_size = cv2.countNonZero(mask)
+    return area_size
+
+def calculate_gray_stats(gray_image, mask):
+    """Calculate mean, min, and max gray values within the mask."""
+    masked_gray = cv2.bitwise_and(gray_image, gray_image, mask=mask)
+    mean_gray = cv2.mean(masked_gray, mask=mask)[0]
+    min_gray = np.min(masked_gray[np.where(mask != 0)])
+    max_gray = np.max(masked_gray[np.where(mask != 0)])
+    return mean_gray, min_gray, max_gray
+
+def calculate_rgb_stats(image, mask):
+    """Calculate mean RGB values within the mask."""
+    masked_rgb = cv2.bitwise_and(image, image, mask=mask)
+    mean_rgb = cv2.mean(masked_rgb, mask=mask)
+    return mean_rgb
+
 if __name__ == '__main__':
     # origin = cv2.imread("./dataset/train/train/not_skin_cancer/not_skin_cancer_21.jpg")
     # image = cv2.imread("./dataset/train/train/not_skin_cancer/not_skin_cancer_21.jpg")
@@ -109,6 +149,27 @@ if __name__ == '__main__':
     contours = find_contours(image4)
     draw_contours(image, contours)
     diameters = draw_circles(image, contours)
+
+
+    # Create the mask
+    mask = create_mask(image)
+
+    # Calculate area size
+    area_size = calculate_area(mask)
+
+    # Calculate gray statistics
+    mean_gray, min_gray, max_gray = calculate_gray_stats(image1, mask)
+
+    # Calculate RGB statistics
+    mean_rgb = calculate_rgb_stats(image, mask)
+
+    # Print results
+    print(f"Alan Boyutu: {area_size} piksel")
+    print(f"Ortalama Gri Değer: {mean_gray}")
+    print(f"Minimum Gri Değer: {min_gray}")
+    print(f"Maksimum Gri Değer: {max_gray}")
+    print(f"Ortalama RGB Değerleri: R={mean_rgb[2]}, G={mean_rgb[1]}, B={mean_rgb[0]}")
+
 
 
     # Görüntüleri aynı anda açma
