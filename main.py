@@ -94,25 +94,25 @@ def unsharp_mask(image, kernel_size=(5, 5), sigma=1.0, amount=1.0, threshold=0):
     return sharpened
 
 if __name__ == '__main__':
-    origin = cv2.imread("./dataset/train/train/not_skin_cancer/not_skin_cancer_30.jpg")
-    resim = cv2.imread("./dataset/train/train/not_skin_cancer/not_skin_cancer_30.jpg")
-    # origin = cv2.imread("./dataset/train/train/skin_cancer/skin_cancer_15.jpg")
-    # resim = cv2.imread("././dataset/train/train/skin_cancer/skin_cancer_15.jpg")
-    resim = cv2.resize(resim, None, fx=2, fy=2, interpolation=cv2.INTER_LINEAR)
-    resim1 = gri(resim)
-    resim2 = cv2.equalizeHist(resim1)
-    # resim2 = cv2.Laplacian(resim, cv2.CV_64F)
-    # resim2 = cv2.convertScaleAbs(resim2)
-    resim2 = unsharp_mask(resim2, kernel_size=(5, 5), sigma=1.0, amount=1.5, threshold=10)
-    resim3 = iso(resim2)
-    resim4 = apply_median_filter(resim3, 3)
-    contours = find_contours(resim4)
-    draw_contours(resim, contours)
-    diameters = draw_circles(resim4, contours)
+    # origin = cv2.imread("./dataset/train/train/not_skin_cancer/not_skin_cancer_21.jpg")
+    # image = cv2.imread("./dataset/train/train/not_skin_cancer/not_skin_cancer_21.jpg")
+    origin = cv2.imread("./dataset/train/train/skin_cancer/skin_cancer_60.jpg")
+    image = cv2.imread("././dataset/train/train/skin_cancer/skin_cancer_60.jpg")
+    image = cv2.resize(image, None, fx=2, fy=2, interpolation=cv2.INTER_LINEAR)
+    image1 = gri(image)
+    image2 = cv2.equalizeHist(image1)
+    # image2 = cv2.Laplacian(image, cv2.CV_64F)
+    # image2 = cv2.convertScaleAbs(image2)
+   # image2 = unsharp_mask(image2, kernel_size=(5, 5), sigma=1.0, amount=1.5, threshold=10)
+    image3 = iso(image1)
+    image4 = apply_median_filter(image3, 33)
+    contours = find_contours(image4)
+    draw_contours(image, contours)
+    diameters = draw_circles(image, contours)
 
 
     # Görüntüleri aynı anda açma
-    images = [origin, resim1, resim2, resim3, resim, resim4]
+    images = [origin, image1, image2, image3, image, image4]
     window_names = ["ILK HALI", "GRI HALI", "HISTOGRAM", "ISO HALI", "SINIRLI", "MEDIAN HALI"]
 
     for window_name, img in zip(window_names, images):
