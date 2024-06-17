@@ -83,8 +83,8 @@ def calculate_rgb_stats(image, mask):
 
 if __name__ == '__main__':
 
-    image_path = "./dataset/train/train/not_skin_cancer/not_skin_cancer_43.jpg"
-    #image_path = "./dataset/train/train/skin_cancer/skin_cancer_08.jpg"
+    #image_path = "./dataset/train/train/not_skin_cancer/not_skin_cancer_94.jpg"
+    image_path = "./dataset/train/train/skin_cancer/skin_cancer_16.jpg"
     image_name = os.path.basename(image_path)
     origin = cv2.imread(image_path)
     image = cv2.imread(image_path)
@@ -92,8 +92,8 @@ if __name__ == '__main__':
     image1 = gri(image)
     #image2 = cv2.adaptiveThreshold(image1,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,21,3)
     image2 = cv2.equalizeHist(image1)
-    image3 = iso(image2)
-    image4 = apply_median_filter(image3, 3)
+    image3 = iso(image1)
+    image4 = apply_median_filter(image3, 33)
     contours = find_contours(image4)
     draw_contours(image, contours)
     diameters = draw_circles(image, contours)
@@ -130,8 +130,19 @@ if __name__ == '__main__':
         "Ortalama B Değeri": [mean_rgb[0]]
     }
 
+    # df_new = pd.DataFrame(data)
+    # file_name = "not_cancer.xlsx"
+    #
+    # # Append new data to the existing Excel file
+    # if os.path.exists(file_name):
+    #     with pd.ExcelWriter(file_name, engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
+    #         df_new.to_excel(writer, index=False, header=False, startrow=writer.sheets['Sheet1'].max_row)
+    # else:
+    #     df_new.to_excel(file_name, index=False)
+
+    #karşılaştırma sonucunu tutacağın yer
     df_new = pd.DataFrame(data)
-    file_name = "gorsel_ozellikler.xlsx"
+    file_name = "sonuc.xlsx"
 
     # Append new data to the existing Excel file
     if os.path.exists(file_name):
@@ -140,12 +151,10 @@ if __name__ == '__main__':
     else:
         df_new.to_excel(file_name, index=False)
 
-    df_new = pd.DataFrame(data)
-    file_name = "yeni_gorsel_ozellikler.xlsx"
 
     # Görüntüleri aynı anda açma
     images = [origin, image1, image2, image3, image, image4]
-    window_names = ["ILK HALI", "GRI HALI", "HISTOGRAM", "ISO HALI", "SINIRLI", "MEDIAN HALI"]
+    window_names = ["ORIGIN", "GRI", "HISTOGRAM", "ISO", "SINIRLI", "MEDIAN"]
 
     for window_name, img in zip(window_names, images):
         image_show(img, window_name)
