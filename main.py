@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import pandas as pd
 import os
+import openpyxl
 from openpyxl import load_workbook
 
 
@@ -125,9 +126,36 @@ def calculate_average_similarity(similarity_results):
 
     return avg_similarity
 
+
+def process_excel(file_path):
+    # Excel dosyasını yükleyin
+    workbook = openpyxl.load_workbook(file_path)
+    sheet = workbook.active
+
+    # Satırları dolaşın ve karşılaştırmaları yapın
+    for row in range(2,
+                     sheet.max_row + 1):  # 2. satırdan başlıyoruz çünkü 1. satır genellikle başlıklar için kullanılır
+        x = 0
+        if sheet[f'B{row}'].value > sheet[f'C{row}'].value:
+            x += 1
+        if sheet[f'D{row}'].value > sheet[f'E{row}'].value:
+            x += 1
+        if sheet[f'F{row}'].value > sheet[f'G{row}'].value:
+            x += 1
+        if sheet[f'H{row}'].value > sheet[f'I{row}'].value:
+            x += 1
+        if sheet[f'J{row}'].value > sheet[f'K{row}'].value:
+            x += 1
+
+        # L sütununa sonucu yazın
+        sheet[f'L{row}'] = x
+
+    # Değişiklikleri kaydedin
+    workbook.save(file_path)
+
 if __name__ == '__main__':
     # Resim yolu ve adını belirleme
-    image_path = "./dataset/train/train/skin_cancer/skin_cancer_16.jpg"
+    image_path = "./dataset/train/train/skin_cancer/skin_cancer_45.jpg"
     image_name = os.path.basename(image_path)
 
     # Görüntüyü yükleme ve işleme
@@ -209,6 +237,8 @@ if __name__ == '__main__':
 
     else:
         similarity_df.to_excel(result_file_name, index=False)
+
+    process_excel('sonuc.xlsx')
 
     # Görüntüleri aynı anda açma
     images = [origin, image1, image2, image3, image, image4]
