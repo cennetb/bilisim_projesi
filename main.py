@@ -78,14 +78,20 @@ def calculate_area(mask):
     return area_size
 
 
-def calculate_gray_stats(gray_image, mask):
-    """Calculate mean, min, and max gray values within the mask."""
-    masked_gray = cv2.bitwise_and(gray_image, gray_image, mask=mask)
-    mean_gray = cv2.mean(masked_gray, mask=mask)[0]
-    min_gray = np.min(masked_gray[np.where(mask != 0)])
-    max_gray = np.max(masked_gray[np.where(mask != 0)])
-    return mean_gray, min_gray, max_gray
+def calculate_gray_stats(image, mask):
+    """Verilen maske içinde ortalama, minimum ve maksimum gri değerlerini hesaplar."""
+    masked_image = cv2.bitwise_and(image, image, mask=mask)
+    #print(mean_gray, min_gray, max_gray)
+    image_show(masked_image, "maskelenmiş")
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+    gray_values = masked_image[np.where(mask != 0)]
 
+    mean_gray = np.mean(gray_values)
+    min_gray = np.min(gray_values)
+    max_gray = np.max(gray_values)
+
+    return mean_gray, min_gray, max_gray
 
 def calculate_rgb_stats(image, mask):
     """Calculate mean RGB values within the mask."""
@@ -101,10 +107,13 @@ def calculate_similarity(new_features, comparison_df):
     for index, row in comparison_df.iterrows():
         sim = {}
         for feature in new_features.keys():
-            if feature in row:
+            if feature != "Görsel Adı" and feature in row and pd.notna(row[feature]):
                 if isinstance(new_features[feature], (int, float)) and isinstance(row[feature], (int, float)):
-                    sim[feature] = 1 - abs(new_features[feature] - row[feature]) / max(new_features[feature],
-                                                                                       row[feature])
+                    sim[feature] = 1 - abs(new_features[feature] - row[feature]) / max(new_features[feature], row[feature])
+                else:
+                    sim[feature] = 1 if new_features[feature] == row[feature] else 0  # String or other types comparison
+            else:
+                sim[feature] = None  # or any other way to handle missing features
         similarity_results.append(sim)
 
     return similarity_results
@@ -112,17 +121,20 @@ def calculate_similarity(new_features, comparison_df):
 def calculate_average_similarity(similarity_results):
     """Calculate the average similarity for each feature."""
     avg_similarity = {}
-    count = len(similarity_results)
+    feature_counts = {}
 
     for sim in similarity_results:
         for feature, value in sim.items():
-            if feature in avg_similarity:
-                avg_similarity[feature] += value
-            else:
-                avg_similarity[feature] = value
+            if value is not None:  # Ignore None values
+                if feature in avg_similarity:
+                    avg_similarity[feature] += value
+                    feature_counts[feature] += 1
+                else:
+                    avg_similarity[feature] = value
+                    feature_counts[feature] = 1
 
     for feature in avg_similarity.keys():
-        avg_similarity[feature] /= count
+        avg_similarity[feature] /= feature_counts[feature]
 
     return avg_similarity
 
@@ -136,32 +148,36 @@ def process_excel(file_path):
     for row in range(2,
                      sheet.max_row + 1):  # 2. satırdan başlıyoruz çünkü 1. satır genellikle başlıklar için kullanılır
         x = 0
-        if sheet[f'B{row}'].value > sheet[f'C{row}'].value:
+        if sheet[f'B{row}'].value < sheet[f'C{row}'].value:
             x += 1
-        if sheet[f'D{row}'].value > sheet[f'E{row}'].value:
+        if sheet[f'D{row}'].value < sheet[f'E{row}'].value:
             x += 1
         if sheet[f'F{row}'].value > sheet[f'G{row}'].value:
             x += 1
-        if sheet[f'H{row}'].value > sheet[f'I{row}'].value:
+        if sheet[f'H{row}'].value < sheet[f'I{row}'].value:
             x += 1
         if sheet[f'J{row}'].value > sheet[f'K{row}'].value:
             x += 1
+        if sheet[f'L{row}'].value < sheet[f'M{row}'].value:
+            x += 1
+        if sheet[f'N{row}'].value < sheet[f'O{row}'].value:
+            x += 1
 
         # L sütununa sonucu yazın
-        sheet[f'L{row}'] = x
+        sheet[f'R{row}'] = x
 
     # Değişiklikleri kaydedin
     workbook.save(file_path)
 
 if __name__ == '__main__':
     # Resim yolu ve adını belirleme
-    image_path = "./dataset/train/train/skin_cancer/skin_cancer_45.jpg"
+    image_path = "./dataset/train/train/skin_cancer/skin_cancer_16.jpg"
     image_name = os.path.basename(image_path)
 
     # Görüntüyü yükleme ve işleme
     origin = cv2.imread(image_path)
     image = cv2.imread(image_path)
-    image = cv2.resize(image, None, fx=2, fy=2, interpolation=cv2.INTER_LINEAR)
+    image = cv2.resize(image, None, fx=3, fy=3, interpolation=cv2.INTER_LINEAR)
     image1 = gri(image)
     image2 = cv2.equalizeHist(image1)
     image3 = iso(image1)
@@ -176,8 +192,12 @@ if __name__ == '__main__':
     # Alan boyutunu hesaplama
     area_size = calculate_area(mask)
 
+    #sınır sayısını bulma
+
+
     # Gri tonlama istatistiklerini hesaplama
     mean_gray, min_gray, max_gray = calculate_gray_stats(image1, mask)
+
 
     # RGB istatistiklerini hesaplama
     mean_rgb = calculate_rgb_stats(image, mask)
@@ -191,7 +211,8 @@ if __name__ == '__main__':
         "Maksimum Gri Değer": max_gray,
         "Ortalama R Değeri": mean_rgb[2],
         "Ortalama G Değeri": mean_rgb[1],
-        "Ortalama B Değeri": mean_rgb[0]
+        "Ortalama B Değeri": mean_rgb[0],
+        "Sınır Sayısı": len(diameters)
     }
 
     # Görsel özellikler ve not_cancer dosyalarını yükleme
@@ -201,6 +222,8 @@ if __name__ == '__main__':
     # Benzerlik hesaplamaları
     similarities_cancer = calculate_similarity(new_data, cancer)
     similarities_not_cancer = calculate_similarity(new_data, not_cancer)
+
+    print(similarities_not_cancer)
 
     # Ortalama benzerlik sonuçlarını hesaplama
     avg_similarity_cancer = calculate_average_similarity(similarities_cancer)
