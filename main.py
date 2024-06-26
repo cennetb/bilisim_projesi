@@ -5,29 +5,24 @@ import os
 import openpyxl
 from openpyxl import load_workbook
 
-
 def image_show(image, window_name):
     """Verilen görüntüyü belirtilen pencere adıyla ekranda gösterir."""
     cv2.imshow(window_name, image)
-
 
 def gri(image):
     """Görüntü üzerinde bir işlem yap ve yeni bir görüntü döndür."""
     # Örnek işlem: Görüntüyü gri tonlamaya çevir
     return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-
 def iso(image):
     """Görüntüyü ikili hale getirme (Isodata thresholding)."""
     _, isodata_goruntu = cv2.threshold(image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     return isodata_goruntu
 
-
 def apply_median_filter(image, kernel_size):
     """Median filtreleme uygula."""
     filtered_image = cv2.medianBlur(image, kernel_size)
     return filtered_image
-
 
 def find_contours(image):
     """Görüntüdeki şekillerin sınırlarını bulur ve koordinatlarını döndürür."""
@@ -39,11 +34,9 @@ def find_contours(image):
     contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     return contours
 
-
 def draw_contours(image, contours):
     """Görüntüdeki şekillerin sınırlarını çiz ve ekranda göster."""
     cv2.drawContours(image, contours, -1, (0, 255, 0), 5)
-
 
 def draw_circles(image, contours):
     """Görüntüdeki şekillerin etrafına minimum çemberler çizer ve çaplarını hesaplar."""
@@ -55,9 +48,7 @@ def draw_circles(image, contours):
         cv2.circle(image, center, radius, (255, 0, 0), 2)
         diameter = 2 * radius
         circle_diameters.append(diameter)
-    print(f"Toplam {len(circle_diameters)} tane sınır bulundu.")
     return circle_diameters
-
 
 def create_mask(image):
     """Create a mask based on green contours in the image."""
@@ -71,20 +62,18 @@ def create_mask(image):
     cv2.drawContours(mask_filled, contours, -1, (255), thickness=cv2.FILLED)
     return mask_filled
 
-
 def calculate_area(mask):
     """Calculate the area size of the masked region."""
     area_size = cv2.countNonZero(mask)
     return area_size
 
-
 def calculate_gray_stats(image, mask):
     """Verilen maske içinde ortalama, minimum ve maksimum gri değerlerini hesaplar."""
     masked_image = cv2.bitwise_and(image, image, mask=mask)
     #print(mean_gray, min_gray, max_gray)
-    image_show(masked_image, "maskelenmiş")
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    # image_show(masked_image, "maskelenmiş")
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
     gray_values = masked_image[np.where(mask != 0)]
 
     mean_gray = np.mean(gray_values)
@@ -98,7 +87,6 @@ def calculate_rgb_stats(image, mask):
     masked_rgb = cv2.bitwise_and(image, image, mask=mask)
     mean_rgb = cv2.mean(masked_rgb, mask=mask)
     return mean_rgb
-
 
 def calculate_similarity(new_features, comparison_df):
     """Calculate similarity between new data and each row in comparison_df."""
@@ -145,11 +133,10 @@ def process_excel(file_path):
     sheet = workbook.active
 
     # Satırları dolaşın ve karşılaştırmaları yapın
-    for row in range(2,
-                     sheet.max_row + 1):  # 2. satırdan başlıyoruz çünkü 1. satır genellikle başlıklar için kullanılır
+    for row in range(2, sheet.max_row + 1):  # 2. satırdan başlıyoruz çünkü 1. satır genellikle başlıklar için kullanılır
         x = 0
         if sheet[f'B{row}'].value < sheet[f'C{row}'].value:
-            x += 1
+            x += 2
         if sheet[f'D{row}'].value < sheet[f'E{row}'].value:
             x += 1
         if sheet[f'F{row}'].value > sheet[f'G{row}'].value:
@@ -162,16 +149,23 @@ def process_excel(file_path):
             x += 1
         if sheet[f'N{row}'].value < sheet[f'O{row}'].value:
             x += 1
+        if sheet[f'P{row}'].value < sheet[f'Q{row}'].value:
+            x += 1
 
         # L sütununa sonucu yazın
         sheet[f'R{row}'] = x
+        if x > 6:
+            print("Görselin benzerlik derecesi:", x, "Kanser olma ihtimali yüksektir.")
+        else:
+            print("Görselin benzerlik derecesi:", x, "Kanser olma ihtimali düşüktür.")
 
     # Değişiklikleri kaydedin
     workbook.save(file_path)
 
 if __name__ == '__main__':
     # Resim yolu ve adını belirleme
-    image_path = "./dataset/train/train/skin_cancer/skin_cancer_16.jpg"
+    # image_path = "./dataset/train/train/not_skin_cancer/not_skin_cancer_56.jpg"
+    image_path = "./dataset/train/train/skin_cancer/skin_cancer_60.jpg"
     image_name = os.path.basename(image_path)
 
     # Görüntüyü yükleme ve işleme
@@ -181,7 +175,7 @@ if __name__ == '__main__':
     image1 = gri(image)
     image2 = cv2.equalizeHist(image1)
     image3 = iso(image1)
-    image4 = apply_median_filter(image3, 33)
+    image4 = apply_median_filter(image3, 15)
     contours = find_contours(image4)
     draw_contours(image, contours)
     diameters = draw_circles(image, contours)
@@ -191,9 +185,6 @@ if __name__ == '__main__':
 
     # Alan boyutunu hesaplama
     area_size = calculate_area(mask)
-
-    #sınır sayısını bulma
-
 
     # Gri tonlama istatistiklerini hesaplama
     mean_gray, min_gray, max_gray = calculate_gray_stats(image1, mask)
@@ -215,6 +206,8 @@ if __name__ == '__main__':
         "Sınır Sayısı": len(diameters)
     }
 
+    print(new_data)
+
     # Görsel özellikler ve not_cancer dosyalarını yükleme
     cancer = pd.read_excel("cancer.xlsx")
     not_cancer = pd.read_excel("not_cancer.xlsx")
@@ -222,8 +215,6 @@ if __name__ == '__main__':
     # Benzerlik hesaplamaları
     similarities_cancer = calculate_similarity(new_data, cancer)
     similarities_not_cancer = calculate_similarity(new_data, not_cancer)
-
-    print(similarities_not_cancer)
 
     # Ortalama benzerlik sonuçlarını hesaplama
     avg_similarity_cancer = calculate_average_similarity(similarities_cancer)
@@ -239,17 +230,6 @@ if __name__ == '__main__':
 
     # Benzerlik sonuçlarını DataFrame'e dönüştürme
     similarity_df = pd.DataFrame([combined_avg_similarity])
-    #
-    # # Karşılaştırma sonuçlarını oluşturma
-    # comparison_results = {}
-    # for feature in new_data.keys():
-    #     if f"{feature}1" in avg_similarity_cancer and f"{feature}2" in avg_similarity_not_cancer:
-    #         comparison_results[feature] = int(
-    #             avg_similarity_cancer[f"{feature}1"] > avg_similarity_not_cancer[f"{feature}2"])
-    #
-    # # Toplam benzerlik skoru hesaplama
-    # total_score = sum(comparison_results.values())
-    # print(total_score)
 
     # Sonuçları Excel dosyasına kaydetme
     result_file_name = "sonuc.xlsx"
