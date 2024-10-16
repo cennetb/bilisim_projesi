@@ -36,7 +36,7 @@ def find_contours(image):
 
 def draw_contours(image, contours):
     """Görüntüdeki şekillerin sınırlarını çiz ve ekranda göster."""
-    cv2.drawContours(image, contours, -1, (0, 255, 0), 5)
+    cv2.drawContours(image, contours, -1, (0, 0, 0), 1)
 
 def draw_circles(image, contours):
     """Görüntüdeki şekillerin etrafına minimum çemberler çizer ve çaplarını hesaplar."""
@@ -70,17 +70,17 @@ def calculate_area(mask):
 def calculate_gray_stats(image, mask):
     """Verilen maske içinde ortalama, minimum ve maksimum gri değerlerini hesaplar."""
     masked_image = cv2.bitwise_and(image, image, mask=mask)
-    #print(mean_gray, min_gray, max_gray)
-    # image_show(masked_image, "maskelenmiş")
-    # cv2.waitKey(0)
-    # cv2.destroyAllWindows()
     gray_values = masked_image[np.where(mask != 0)]
+
+    if gray_values.size == 0:
+        return None, None, None  # Veya başka bir varsayılan değer döndürebilirsiniz
 
     mean_gray = np.mean(gray_values)
     min_gray = np.min(gray_values)
     max_gray = np.max(gray_values)
 
     return mean_gray, min_gray, max_gray
+
 
 def calculate_rgb_stats(image, mask):
     """Calculate mean RGB values within the mask."""
@@ -149,8 +149,8 @@ def process_excel(file_path):
             x += 1
         if sheet[f'N{row}'].value < sheet[f'O{row}'].value:
             x += 1
-        if sheet[f'P{row}'].value < sheet[f'Q{row}'].value:
-            x += 1
+       # if sheet[f'P{row}'].value < sheet[f'Q{row}'].value:
+        #    x += 1
 
         # L sütununa sonucu yazın
         sheet[f'R{row}'] = x
@@ -165,20 +165,23 @@ def process_excel(file_path):
 if __name__ == '__main__':
     # Resim yolu ve adını belirleme
     # image_path = "./dataset/train/train/not_skin_cancer/not_skin_cancer_56.jpg"
-    image_path = "./dataset/train/train/skin_cancer/skin_cancer_60.jpg"
+    image_path = "./dataset/test/test/skin_cancer/skin_cancer_120.jpg"
     image_name = os.path.basename(image_path)
+    white_path = "./dataset/test/beyaz.jpg"
 
     # Görüntüyü yükleme ve işleme
     origin = cv2.imread(image_path)
+    white_img = cv2.imread(white_path)
     image = cv2.imread(image_path)
     image = cv2.resize(image, None, fx=3, fy=3, interpolation=cv2.INTER_LINEAR)
     image1 = gri(image)
     image2 = cv2.equalizeHist(image1)
     image3 = iso(image1)
-    image4 = apply_median_filter(image3, 15)
+    image4 = apply_median_filter(image3, 77)
     contours = find_contours(image4)
     draw_contours(image, contours)
     diameters = draw_circles(image, contours)
+    white_path = draw_contours(white_img, contours)
 
     # Maske oluşturma
     mask = create_mask(image)
@@ -207,6 +210,11 @@ if __name__ == '__main__':
     }
 
     print(new_data)
+
+    # Sonuçları masaüstüne kaydetme
+    desktop_path = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
+    save_path = os.path.join(desktop_path, "white_img_result.jpg")
+    cv2.imwrite(save_path, white_img)
 
     # Görsel özellikler ve not_cancer dosyalarını yükleme
     cancer = pd.read_excel("cancer.xlsx")
@@ -244,8 +252,8 @@ if __name__ == '__main__':
     process_excel('sonuc.xlsx')
 
     # Görüntüleri aynı anda açma
-    images = [origin, image1, image2, image3, image, image4]
-    window_names = ["ORIGIN", "GRI", "HISTOGRAM", "ISO", "SINIRLI", "MEDIAN"]
+    images = [origin, image1, image2, image3, image, image4, white_img]
+    window_names = ["ORIGIN", "GRI", "HISTOGRAM", "ISO", "SINIRLI", "MEDIAN", "WHITE"]
 
     for window_name, img in zip(window_names, images):
         image_show(img, window_name)
