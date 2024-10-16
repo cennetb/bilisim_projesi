@@ -83,8 +83,8 @@ def calculate_rgb_stats(image, mask):
 
 if __name__ == '__main__':
 
-    image_path = "./dataset/train/train/not_skin_cancer/not_skin_cancer_94.jpg"
-    #image_path = "./dataset/train/train/skin_cancer/skin_cancer_09.jpg"
+    # image_path = "./dataset/train/train/not_skin_cancer/not_skin_cancer_94.jpg"
+    image_path = "./dataset/train/train/skin_cancer/skin_cancer_112.jpg"
     image_name = os.path.basename(image_path)
     origin = cv2.imread(image_path)
     image = cv2.imread(image_path)
@@ -93,7 +93,7 @@ if __name__ == '__main__':
     #image2 = cv2.adaptiveThreshold(image1,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,21,3)
     image2 = cv2.equalizeHist(image1)
     image3 = iso(image1)
-    image4 = apply_median_filter(image3, 33)
+    image4 = apply_median_filter(image3, 15)
     contours = find_contours(image4)
     draw_contours(image, contours)
     diameters = draw_circles(image, contours)
@@ -132,7 +132,7 @@ if __name__ == '__main__':
     }
 
     df_new = pd.DataFrame(data)
-    file_name = "not_cancer.xlsx"
+    file_name = "cancer.xlsx"
 
     # Append new data to the existing Excel file
     if os.path.exists(file_name):

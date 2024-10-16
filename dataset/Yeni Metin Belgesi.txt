@@ -1,0 +1,2 @@
+kaggle datasets download -d mdismielhossenabir/skin-cancer-or-not-skin-cancer-image-datasets
+https://www.kaggle.com/datasets/mdismielhossenabir/skin-cancer-or-not-skin-cancer-image-datasets

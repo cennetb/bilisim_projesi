@@ -35,8 +35,9 @@ def find_contours(image):
     return contours
 
 def draw_contours(image, contours):
-    """Görüntüdeki şekillerin sınırlarını çiz ve ekranda göster."""
+    """Görüntüdeki şekillerin sınırlarını çiz ve ekranda göster.--pixel ayarlama"""
     cv2.drawContours(image, contours, -1, (0, 0, 0), 1)
+
 
 def draw_circles(image, contours):
     """Görüntüdeki şekillerin etrafına minimum çemberler çizer ve çaplarını hesaplar."""
